@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="icon" type="image/png" sizes="32x32" href="./" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Arizonia&display=swap"
+      rel="stylesheet"
+    />
+    <title>Day 6 JS | Canvas Sketchpad Web App</title>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
+      integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <!-- tailwind cdn -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- linking script file -->
+    <script defer src="./src/script.min.js"></script>
+    <style>
+      #color-picker::-webkit-color-swatch {
+        border-radius: 15px;
+        border: none;
+      }
+      #color-picker::-moz-color-swatch {
+        border-radius: 15px;
+        border: none;
+      }
+      .active {
+        background: #19a7ce;
+      }
+
+      .overlay {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.7);
+        transition: opacity 500ms;
+        visibility: hidden;
+        opacity: 0;
+      }
+      .overlay:target {
+        visibility: visible;
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body class="">
+    <!-- popup for taking sign. -->
+    <div id="popup1" class="modal overlay flex justify-center items-center">
+      <div
+        class="popup p-5 bg-white rounded-md w-[30% transition-all duration-[5s] ease-in-out flex flex-col gap-3 relative"
+      >
+        <a class="close absolute right-3 top-1 text-xl" href="#">&times;</a>
+        <label for="sign-input">
+          <p>Write your signature here</p>
+        </label>
+        <form class="sign-form relative">
+          <input
+            id="#sign-input"
+            type="text"
+            class="text-xl border border-black rounded-sm pl-2 pr-14 py-1 focus:outline-none font-['Arizonia',cursive] w-full"
+            maxlength="25"
+          />
+          <button
+            type="submit"
+            class="absolute top-0 right-0 px-2 h-full rounded-r-sm [background:linear-gradient(90deg,rgb(48,46,64),rgb(52,50,70)),rgb(48,46,64)] hover:[background:#19A7CE] transition-all duration-300"
+          >
+            <img src="./images/done.svg" />
+          </button>
+        </form>
+        <p class="text-xs italic text-slate-500">
+          Note: typed text will be signed in your drawing
+        </p>
+      </div>
+    </div>
+
+    <section
+      class="screenshot-viewer hidden z-40 transition-opacity duration-700 opacity-1 shadow-1 absolute rounded-lg flex justify-center items-center border-2 border-[#19A7CE] w-[80%] left-0 right-0 m-auto my-3 h-fit overflow-hidden"
+    >
+      <button
+        class="close-btn absolute right-0 left-0 top-0 translate-y-[-2.2rem] m-auto border-2 border-[#19A7CE] bg-gray-800 rounded-full w-[5rem] h-[5rem] flex justify-center items-center"
+      >
+        <img class="translate-y-3" src="./images/close-btn.svg" alt="" />
+      </button>
+      <a
+        class="dwnld-img hidden shadow-2xl hover:shadow-[0px_0px_1rem_5px_#00000020] absolute right-4 bottom-4 bg-green-500 hover:bg-green-600 text-white font-bold p-3 inline-flex rounded-full items-center"
+        target="_blank"
+        href="#"
+      >
+        <svg width="32" height="32" viewBox="0 0 24 24">
+          <path
+            fill="white"
+            d="M12 15.575q-.2 0-.375-.062T11.3 15.3l-3.6-3.6q-.3-.3-.288-.7t.288-.7q.3-.3.713-.312t.712.287L11 12.15V5q0-.425.288-.713T12 4q.425 0 .713.288T13 5v7.15l1.875-1.875q.3-.3.713-.288t.712.313q.275.3.288.7t-.288.7l-3.6 3.6q-.15.15-.325.213t-.375.062ZM6 20q-.825 0-1.413-.588T4 18v-2q0-.425.288-.713T5 15q.425 0 .713.288T6 16v2h12v-2q0-.425.288-.713T19 15q.425 0 .713.288T20 16v2q0 .825-.588 1.413T18 20H6Z"
+          />
+        </svg>
+      </a>
+      <!-- <img src="./js.svg" class="w-fit" alt=""> -->
+    </section>
+    <section
+      class="drawing-pad bg-[url('./images/bg.jpg')] bg-cover bg-fixed bg-center"
+    >
+      <canvas id="draw"> </canvas>
+      <textarea
+        class="hidden bg-transparent absolute top-0 w-[10rem] h-[10rem] resize overflow-auto border-[0.075rem] border-dotted border-[#19A7CE] outline-[0.075rem] rounded-sm focus:outline-none focus:border-[#e13]"
+      ></textarea>
+      <div
+        class="sign-on-sketch hidden absolute bottom-32 right-28 px-2 backdrop-blur-3xl rounded-md shadow-2xl text-violet-900 font-['Arizonia',cursive] text-5xl rotate-[-19deg]"
+      >
+        Sign here
+      </div>
+    </section>
+    <section id="drawing-pad__tools" class="">
+      <!-- <h2>Toolbar</h2> -->
+
+      <div
+        class="sketch-toolbar z-20 absolute top-0 min-h-screen w-[3.5rem] flex flex-col justify-center [background:linear-gradient(90deg,rgb(48,46,64),rgb(52,50,70)),rgb(48,46,64)]"
+      >
+        <button
+          class="sketch-tool magic-wand flex items-center justify-center px-4 py-2 hover:bg-[#19A7CE] active:bg-[#19A7CE] transition duration-300"
+        >
+          <img src="./images/magic-wand.svg" alt="" />
+          <div
+            class="name-pointer hidden absolute left-[2.9rem] inline-flex justify-center items-center ml-3 px-2 bg-[#e13] rounded-md text-sm py-1 text-white"
+          >
+            <div class="outer-wrapper relative">
+              <img
+                class="absolute translate-x-[-1.18rem]"
+                src="./images/name-pointer.svg"
+                alt=""
+              />
+              Magic Wand
+            </div>
+          </div>
+        </button>
+        <button
+          class="sketch-tool select flex items-center justify-center px-4 py-2 hover:bg-[#19A7CE] active:bg-[#19A7CE] transition duration-300"
+        >
+          <img src="./images/select-tool.svg" alt="" />
+          <div
+            class="name-pointer hidden absolute left-[2.9rem] inline-flex justify-center items-center ml-3 px-2 bg-[#e13] rounded-md text-sm py-1 text-white"
+          >
+            <div class="outer-wrapper relative">
+              <img
+                class="absolute translate-x-[-1.18rem]"
+                src="./images/name-pointer.svg"
+                alt=""
+              />
+              Select
+            </div>
+          </div>
+        </button>
+
+        <button
+          class="sketch-tool pencil flex items-center justify-center px-4 py-2 hover:bg-[#19A7CE] active:bg-[#19A7CE] transition duration-300"
+        >
+          <img src="./images/pencil-tool.svg" alt="" />
+          <div
+            class="name-pointer hidden absolute left-[2.9rem] inline-flex justify-center items-center ml-3 px-2 bg-[#e13] rounded-md text-sm py-1 text-white"
+          >
+            <div class="outer-wrapper relative">
+              <img
+                class="absolute translate-x-[-1.18rem]"
+                src="./images/name-pointer.svg"
+                alt=""
+              />
+              Pencil
+            </div>
+          </div>
+        </button>
+        <button
+          class="sketch-tool roller flex items-center justify-center px-4 py-2 hover:bg-[#19A7CE] active:bg-[#19A7CE] transition duration-300"
+        >
+          <img src="./images/roller-tool.svg" alt="" />
+          <div
+            class="name-pointer hidden absolute left-[2.9rem] inline-flex justify-center items-center ml-3 px-2 bg-[#e13] rounded-md text-sm py-1 text-white"
+          >
+            <div class="outer-wrapper relative">
+              <img
+                class="absolute translate-x-[-1.18rem]"
+                src="./images/name-pointer.svg"
+                alt=""
+              />
+              Roller
+            </div>
+          </div>
+        </button>
+
+        <button
+          class="sketch-tool color-picker flex items-center justify-center px-4 py-2 hover:bg-[#19A7CE] active:bg-[#19A7CE] transition duration-300"
+        >
+          <input
+            type="color"
+            class="rounded-full bg-transparent"
+            id="color-picker"
+            value="#ffffff"
+          />
+          <!-- <img src="./images/color-picker-tool.svg" alt="" srcset="" /> -->
+          <div
+            class="name-pointer hidden absolute left-[2.9rem] inline-flex justify-center items-center ml-3 px-2 bg-[#e13] rounded-md text-sm py-1 text-white"
+          >
+            <div class="outer-wrapper relative">
+              <img
+                class="absolute translate-x-[-1.18rem]"
+                src="./images/name-pointer.svg"
+                alt=""
+              />
+              Color Picker
+            </div>
+          </div>
+        </button>
+        <a class="button" href="#popup1">
+          <button
+            class="sketch-tool signature flex items-center justify-center px-4 py-2 hover:bg-[#19A7CE] active:bg-[#19A7CE] transition duration-300"
+          >
+            <img src="./images/signature.svg" alt="" />
+            <div
+              class="name-pointer hidden absolute left-[2.9rem] inline-flex justify-center items-center ml-3 px-2 bg-[#e13] rounded-md text-sm py-1 text-white"
+            >
+              <div class="outer-wrapper relative">
+                <img
+                  class="absolute translate-x-[-1.18rem]"
+                  src="./images/name-pointer.svg"
+                  alt=""
+                />
+                Signature
+              </div>
+            </div>
+          </button>
+        </a>
+        <button
+          class="sketch-tool screenshot flex items-center justify-center px-4 py-2 hover:bg-[#19A7CE] active:bg-[#19A7CE] transition duration-300"
+        >
+          <img src="./images/screenshot.svg" alt="" />
+          <div
+            class="name-pointer hidden absolute left-[2.9rem] inline-flex justify-center items-center ml-3 px-2 bg-[#e13] rounded-md text-sm py-1 text-white"
+          >
+            <div class="outer-wrapper relative">
+              <img
+                class="absolute translate-x-[-1.18rem]"
+                src="./images/name-pointer.svg"
+                alt=""
+              />
+              Screenshot
+            </div>
+          </div>
+        </button>
+        <button
+          class="sketch-tool reset flex items-center justify-center px-4 py-2 hover:bg-[#19A7CE] active:bg-[#19A7CE] transition duration-300"
+        >
+          <img src="./images/reset.svg" alt="" srcset="" />
+          <div
+            class="name-pointer hidden absolute left-[2.9rem] inline-flex justify-center items-center ml-3 px-2 bg-[#e13] rounded-md text-sm py-1 text-white"
+          >
+            <div class="outer-wrapper relative">
+              <img
+                class="absolute translate-x-[-1.18rem]"
+                src="./images/name-pointer.svg"
+                alt=""
+              />
+              Reset
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <div
+        class="contacts absolute top-2 right-2 shadow-2xl rounded-md w-[3.5rem] [background:linear-gradient(90deg,rgb(48,46,64),rgb(52,50,70)),rgb(48,46,64)] overflow-hidden"
+      >
+        <a
+          href="https://www.frontendmentor.io/profile/NehalSahu8055"
+          target="_blank"
+          class="contact fem flex items-center justify-center px-4 py-4 hover:bg-[#19A7CE] active:bg-[#19A7CE] transition duration-300"
+        >
+          <img src="./images/fem.svg" alt="" />
+        </a>
+        <a
+          href="https://github.com/NehalSahu8055"
+          target="_blank"
+          class="contact github fem flex items-center justify-center px-4 py-2 hover:bg-[#19A7CE] active:bg-[#19A7CE] transition duration-300"
+        >
+          <img src="./images/github.svg" alt="" />
+        </a>
+        <a
+          href="https://www.linkedin.com/"
+          target="_blank"
+          class="contact linked-in flex items-center justify-center px-4 py-2 hover:bg-[#19A7CE] active:bg-[#19A7CE] transition duration-300"
+        >
+          <img src="./images/linked-in.svg" alt="" />
+        </a>
+        <a
+          href="https://www.facebook.com/"
+          class="contact facebook flex items-center justify-center px-4 py-2 hover:bg-[#19A7CE] active:bg-[#19A7CE] transition duration-300"
+        >
+          <img src="./images/facebook.svg" alt="" />
+        </a>
+      </div>
+    </section>
+
+    <!-- <footer
+      class="font-semi-bold fixed bottom-0 left-0 rounded-tr-xl bg-sky-300 px-4 py-1 text-center text-black"
+    >
+      Made with ❤️ by Nehal.
+    </footer> -->
+  </body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "06_canva-sketch-pad",
+  "version": "1.0.0",
+  "description": "- Solution URL: [Click here](https://github.com/NehalSahu8055/Day-5-Search-City-Web-App)\r - Live Site URL: [Click here](https://nehalsahu8055.github.io/Day-5-Search-City-Web-App/)",
+  "main": "index.js",
+  "scripts": {
+    "start": "vite",
+    "build": "npx tailwindcss -i ./src/css/input.css -o ./src/css/output.min.css --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.27",
+    "tailwindcss": "^3.3.3",
+    "vite": "^4.4.8"
+  }
+}
